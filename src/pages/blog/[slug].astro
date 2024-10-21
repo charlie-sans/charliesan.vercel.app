@@ -3,18 +3,23 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Bio from '../../components/Bio.astro';
 import getPostData from '../../utils/getPostData';
 
-export async function getStaticPaths() {
+export async function getStaticPaths(): Promise<{ params: { slug: string }, props: { post: any } }[]> {
   const posts = await Astro.glob('../../data/blog-posts/*.md');
-  return posts.map(p => ({
-    params: { slug: p.file.split('/').pop().split('.').shift() },
+  return posts.map(p => {
+    const slug = p.file?.split('/').pop()?.split('.').shift() ?? '';
+    if (!slug) throw new Error('Slug is undefined');
+    return {
+      params: { slug },
     props: { post: p },
-  }));
-}
+      };
+    });
+  }
+
 
 const { Content, frontmatter } = Astro.props.post;
 const { title, description, publishDate } = frontmatter;
 const { slug, readingTime } = getPostData(Astro.props.post);
-const permalink = `${Astro.site.href}blog/${slug}`;
+const permalink = Astro.site ? `${Astro.site.href}blog/${slug}` : `blog/${slug}`;
 ---
 
 <BaseLayout title={title} description={description} permalink={permalink} current="blog">
